@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+
+var log = require('../src/log');
+var fs = require('fs');
+var path = require('path');
+var Rw = require('../src/core');
+var libFile = require('../lib/nodejs/file');
+
+var node = process.argv[0],
+    rwCmd = process.argv[1],
+    task = process.argv[2];
+
+log.setLevel(2);
+
+var config = {};
+
+if(process.env.rootDir) {
+    config.rootDir = path.resolve(process.env.rootDir);
+}
+
+config.task = task || 'main';
+
+new Rw(config, function() {
+    if(err) {
+        log.e(err);
+        process.exit(1);
+    }
+    log.i(result);
+    process.exit();
+});
+
+
