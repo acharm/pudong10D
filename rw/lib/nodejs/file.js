@@ -99,7 +99,17 @@ function isExec(file) {
 }
 
 function isSymbolicLink(file) {
-    var stat = fs.lstatSync
+    var stat = fs.lstatSync(file);
+    return stat.isSymbolicLink();
 }
 
+function isDirectory(file) {
+    var stat = fs.statSync(file);
+    return stat.isDirectory();
+}
+
+function isFile(file) {
+    var stat = fs.statSync(file);
+    return stat.isFile();
+}
 

@@ -20,7 +20,7 @@ if(process.env.rootDir) {
 
 config.task = task || 'main';
 
-new Rw(config, function() {
+new Rw(config, function(err, result) {
     if(err) {
         log.e(err);
         process.exit(1);
