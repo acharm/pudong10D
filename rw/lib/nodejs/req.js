@@ -122,9 +122,111 @@ var Req = function() {
             if(!headers) {
                 headers = {};
             }
-            var config = {};
+            var config = {url: url, method: method.toUpperCase(), headers: headers};
+            if(data) {
+                if(typeof(data) === 'string') {
+                    config.data = data;
+                }else {
+                    config.data = JSON.stringify(data);
+                }
+                if(!headers['Content-type']) {
+                    headers['Content-type'] = 'application/json';
+                    headers['Content-Length'] = strlen(config.data);
+                }
+	        }
+            ajax(config, fn);
         }
-    })
+        self[method] = function(url, data, fn) {
+            self[method + 'Ex'](url, {}, data, fn);
+        }
+        self[method + 'Bearer'] = function(url, token, json, fn) {
+            var data = JSON.stringify(json);
+            self[method + 'Ex'](url, {
+                Authorization: 'Bearer ' + token
+            }, data, fn);
+        }
+        self[method + 'Form'] = function(url, json, fn) {
+            var data = querystring.stringify(json);
+            self[method + 'Ex'](url, {
+                'Content-type': 'application/x-www-form-urlencoded',
+                'Content-Length': strlen(data)
+            }, data, fn);
+        }
+        self[method + 'Json'] = function(url, json, fn) {
+            var data = JSON.stringify(json);
+            self[method + 'Ex'](url, {
+                'Content-type': 'application/json',
+                'Content-Length': strlen(data)
+            }, data, fn);
+        }
+        self[method + 'Cookies'] = function(url, cookies, data, fn) {
+            var cookiearr = [];
+            for(var key in cookies) {
+                cookiearr.push(key + '=' + cookies[key]);
+            }
+            self[method + 'Ex'](url, {
+                Cookie: cookiearr.join('; ')
+            }, data, fn);
+        }
+        self[method + 'FormCookies'] = function(url, cookies, json, fn) {
+            var cookiearr = [];
+            for(var key in cookies) {
+                cookiearr.push(key + '=' + cookies[key]);
+            }
+            var data = querystring.stringify(json);
+            self[method + 'Ex'](url, {
+                'Content-type': 'application/x-www-form-urlencoded',
+                'Content-Length': strlen(data),
+                Cookie: cookiearr.join('; ')
+            }, data, fn);
+        }
+	});
+
+    // modified from git://github.com/jshttp/fresh
+    self.fresh = function(reqheaders, resheaders) {
+        
+        // default
+        var etagMatches = true;
+        var notModified = true;
+
+        // fields
+        var modifiedSince = reqheaders['if-modified-since'];
+        var noneMatch = reqheaders['if-none-match'];
+        var lastModified = resheaders['last-modified'];
+        var etag = resheaders['etag'];
+        var cc = reqheaders['cache-control'];
+
+        // unconditional request
+        if(!modifiedSince && !noneMatch) {
+            return false;
+        }
+        // check for no-cache cache request directive
+        if(cc && cc.indexOf('no-cache') !== -1) {
+            return false;
+        }
+        // parse if-none-match
+        if(noneMatch) {
+            etagMatches = ~noneMatch.indexOf(etag) || '*' == noneMatch[0];
+        }
+        // if-modified-since
+        if(modifiedSince) {
+            modifiedSince = new Date(modifiedSince);
+            lastModified = new Date(lastModified);
+            notModified = lastModified <= modifiedSince;
+        }
+        return !!(etagMatches && notModified);
+    }
+    self.setuastr = function(str) {
+        uastr = str;
+    }
+    self.setoptions = function(obj) {
+        for(var key in obj) {
+            defaultOptions[key] = obj[key];
+        }
+    }
 }
+
+module.exports = new Req();
+module.exports.ins = Req;
 
 
